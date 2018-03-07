@@ -10,7 +10,9 @@
     "axios": "^0.18.0"
   },
   "devDependencies": {
+    "@types/aws-lambda": "^0.0.33",
     "@types/axios": "^0.14.0",
+    "ts-lint": "^4.5.1",
     "typescript": "^2.7.2"
   }
 }

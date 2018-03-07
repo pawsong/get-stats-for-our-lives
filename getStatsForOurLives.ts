@@ -1,4 +1,6 @@
 import axios from "axios";
+import * as lambda from "aws-lambda";
+
 
 const ACTION_NETWORK_PETITION_ID = "fixme";
 const ACTION_NETWORK_OSDI_API_TOKEN = "fixme";
@@ -149,4 +151,18 @@ async function getStatsForOurLives() {
 
   // Return the cached results.
   return cachedResults;
+}
+
+
+export const lambdaGetStatsForOurLives = async (event: lambda.APIGatewayEvent, context: lambda.APIGatewayEventRequestContext, callback: lambda.APIGatewayProxyCallback) => {
+  try {
+    const result = await getStatsForOurLives();;
+
+    callback(undefined, {
+      body: JSON.stringify(result),
+      statusCode: 200
+    })
+  } catch (e) {
+    callback(new Error("Unable to fetch stats"), {body: JSON.stringify(e), statusCode:500} );
+  }
 }
