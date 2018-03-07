@@ -153,7 +153,10 @@ async function getStatsForOurLives() {
   return cachedResults;
 }
 
-
+/**
+ * Exposing getStatsForOurLives as a lambda API that can be called via a GET method
+ * and returns its results in JSON format.
+ */
 export const lambdaGetStatsForOurLives = async (event: lambda.APIGatewayEvent, context: lambda.APIGatewayEventRequestContext, callback: lambda.APIGatewayProxyCallback) => {
   try {
     const result = await getStatsForOurLives();;
