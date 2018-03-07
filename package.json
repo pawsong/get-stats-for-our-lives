@@ -1,0 +1,16 @@
+{
+  "name": "mfol-fetcher",
+  "version": "1.0.0",
+  "description": "For fetching data for March for Our Lives",
+  "main": "getStatsForOurLives.js",
+  "repository": "https://github.com/Revisolution/mfol-fetcher.git",
+  "author": "Stuart Schechter <stuart@revisolution.com>",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.18.0"
+  },
+  "devDependencies": {
+    "@types/axios": "^0.14.0",
+    "typescript": "^2.7.2"
+  }
+}
