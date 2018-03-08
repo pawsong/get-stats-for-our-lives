@@ -28,11 +28,7 @@ interface StatsForOurLives extends EventStats, PetitionStats {}
 /**
  * Store the most recent statistics here
  */
-let cachedResults: StatsForOurLives = {
-  numEvents: undefined,
-  numParticipants: undefined,
-  numPetitionSignatures: undefined,
-};
+let cachedResults = {} as StatsForOurLives;
 
 
 /**
@@ -42,9 +38,9 @@ let cachedResults: StatsForOurLives = {
 const cacheMetadata = {
   // Set this to true when we're loading the cache so that we don't
   // issue multiple loads at once.
-  loadPromise: undefined as Promise<void>,
+  loadPromise: undefined as Promise<void> | undefined,
   // Track how fresh the data in the cache is.
-  currentAsOf: undefined as Date
+  currentAsOf: undefined as Date | undefined
 };
 
 /**
@@ -53,7 +49,7 @@ const cacheMetadata = {
  * they are available immediately.
  */
 const petitionUrl = `https://actionnetwork.org/api/v2/petitions/${ACTION_NETWORK_PETITION_ID}`;
-async function loadPetitionStats(): Promise<void> {
+export async function loadPetitionStatsViaREST(): Promise<void> {
   const getResult = await axios.get(
     petitionUrl,
     {
@@ -64,6 +60,39 @@ async function loadPetitionStats(): Promise<void> {
   cachedResults = {
     ...cachedResults,
     numPetitionSignatures: total_signatures
+  }
+}
+
+export async function loadPetitionStatsByScrapingWidget(): Promise<void> {
+  // The petition signature count can be scraped from this page's body
+  // which we will download via the axios package
+  try {
+    const widget = await axios.get(
+      "https://actionnetwork.org/widgets/v3/form/an-act-to-protect-save-your-children?format=js&style=full", {
+        headers: {},
+        responseType: "text",
+      }
+    );
+    const body = widget.data as string;
+    // The count comes immediately after this tag
+    const divStartTag = `<div class=\\"action_status_running_total\\">`;
+    const divStartIndex = body.indexOf(divStartTag);
+    if (divStartIndex <= 0) {
+      return;
+    }
+    const valueStartIndex = divStartIndex + divStartTag.length;
+    const bodyStartAtValue = body.substr(valueStartIndex);
+    // The count is comma-separated, and we'll pull out the comma so we can parse it.
+    const bodyValue = bodyStartAtValue.substr(0, bodyStartAtValue.indexOf(' ')).replace(",","");
+    // Parse the count and add it to the cache results.
+    const numPetitionSignatures = parseInt(bodyValue, 10);
+    cachedResults = {
+      ...cachedResults,
+      numPetitionSignatures
+    }
+  } catch (e) {
+    //
+    console.log("exception", e); // fixme
   }
 }
 
@@ -87,7 +116,7 @@ const getEventsAxiosOptions = {
  * and put the results directly in the cache so that
  * they are available immediately.
  */
-async function loadEventStats(): Promise<void> {
+export async function loadEventStats(): Promise<void> {
   const getEventsResult = await axios.get(getEventsUrl, getEventsAxiosOptions);
   let events = JSON.parse(getEventsResult.data) as ActionKitEvent[];
   events = events.filter( event => event.is_approved = 1)
@@ -102,9 +131,9 @@ async function loadEventStats(): Promise<void> {
 
 
 async function loadStatsForOurLives(): Promise<void> {
-  const [petitionStats, eventStats] = await Promise.all([
-    loadPetitionStats(),
-    loadEventStats(),
+  await Promise.all([
+    loadPetitionStatsByScrapingWidget(),
+    // FIXME - turn back on // loadEventStats(),
   ]);
 }
 
@@ -157,7 +186,7 @@ async function getStatsForOurLives() {
  * Exposing getStatsForOurLives as a lambda API that can be called via a GET method
  * and returns its results in JSON format.
  */
-export const lambdaGetStatsForOurLives = async (event: lambda.APIGatewayEvent, context: lambda.APIGatewayEventRequestContext, callback: lambda.APIGatewayProxyCallback) => {
+export const lambdaGetStatsForOurLives = async (_event: lambda.APIGatewayEvent, _context: lambda.APIGatewayEventRequestContext, callback: lambda.APIGatewayProxyCallback) => {
   try {
     const result = await getStatsForOurLives();;
 
@@ -166,6 +195,12 @@ export const lambdaGetStatsForOurLives = async (event: lambda.APIGatewayEvent, c
       statusCode: 200
     })
   } catch (e) {
-    callback(new Error("Unable to fetch stats"), {body: JSON.stringify(e), statusCode:500} );
+    callback(new Error("Unable to fetch stats"), {body: JSON.stringify({exception: e, cachedResults}), statusCode:500} );
   }
 }
+
+async function runTest() {
+  const result = await getStatsForOurLives();
+  console.log("Test output", result);
+}
+runTest();
