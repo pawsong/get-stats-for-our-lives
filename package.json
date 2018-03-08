@@ -1,18 +1,24 @@
 {
-  "name": "mfol-fetcher",
+  "name": "get-stats-for-our-lives",
   "version": "1.0.0",
   "description": "For fetching data for March for Our Lives",
   "main": "getStatsForOurLives.js",
-  "repository": "https://github.com/Revisolution/mfol-fetcher.git",
-  "author": "Stuart Schechter <stuart@revisolution.com>",
+  "repository": "https://github.com/RagtagOpen/get-stats-for-our-lives.git",
+  "author": "Stuart Schechter <stuart@revisolution.com> for Ragtag",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.18.0"
+    "axios": "^0.18.0",
+    "cross-env": "^5.1.3"
   },
   "devDependencies": {
     "@types/aws-lambda": "^0.0.33",
     "@types/axios": "^0.14.0",
+    "@types/mocha": "^2.2.48",
+    "@types/node": "^9.4.6",
     "ts-lint": "^4.5.1",
     "typescript": "^2.7.2"
+  },
+  "scripts": {
+    "debug": "node --inspect=9229 --debug-brk dist/get-stats-for-our-lives.js"
   }
 }
