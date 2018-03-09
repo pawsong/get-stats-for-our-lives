@@ -1,14 +1,6 @@
 import axios from "axios";
 import * as lambda from "aws-lambda";
 
-
-const ACTION_NETWORK_PETITION_ID = "fixme";
-const ACTION_NETWORK_OSDI_API_TOKEN = "fixme";
-
-const ACTION_KIT_CAMPAIGN_ID = "fixme";
-const ACTION_KIT_USERNAME = "fixme";
-const ACTION_KIT_PASSWORD = "fixme";
-
 const msBetweenReloads = 5000;
 
 interface EventStats {
@@ -43,25 +35,55 @@ const cacheMetadata = {
   currentAsOf: undefined as Date | undefined
 };
 
+
 /**
- * Load petition statistics from ActionNetwork
- * and put the results directly in the cache so that
- * they are available immediately.
+ * Scrape a value out of a page or document by providing the UNIQUE string
+ * that should come before the value and the string that should
+ * occur after the value.
+ * @param body 
+ * @param startIndicator The string that occurs before the value to be scraped, which must
+ * be unique enough to not also appear earlier in the document.  Scraping begins immediately
+ * after this value.
+ * @param endIndicator Scraping stops at the first occurrence of this string. 
  */
-const petitionUrl = `https://actionnetwork.org/api/v2/petitions/${ACTION_NETWORK_PETITION_ID}`;
-export async function loadPetitionStatsViaREST(): Promise<void> {
-  const getResult = await axios.get(
-    petitionUrl,
-    {
-      headers: {"OSDI-API-Token": ACTION_NETWORK_OSDI_API_TOKEN}
+function scrapeValue(body: string, startIndicator: string, endIndicator: string) {
+  const indexOfStartIndicator = body.indexOf(startIndicator);
+  if (indexOfStartIndicator <= 0) {
+    return "";
+  }
+  const indexOfValueToScrape = indexOfStartIndicator + startIndicator.length;
+  const bodyStartingWithValue = body.substr(indexOfValueToScrape);
+  return bodyStartingWithValue.substr(0, bodyStartingWithValue.indexOf(endIndicator));
+}
+
+
+const actionKitUrl = `https://event.marchforourlives.com/cms/event/march-our-lives-events_attend/search_results/?all=1&akid=&source=&page=march-our-lives-events_attend&callback=actionkit.forms.onEventSearchResults&callback=actionkit.forms.onEventSearchResults&r=0.4442138994547189`;
+export async function loadMarchesByScrapingEveryTown(): Promise<void> {
+  try {
+    const actionKitPage = await axios.get(actionKitUrl);
+    const body = actionKitPage.data as string;
+
+    // Scrape the number of events (marches)
+    const marchesAsString = scrapeValue(body, `getElementById(\\"total-marches\\").innerHTML = '`, `'`);
+    const numEvents = parseInt(marchesAsString, 10);
+
+    // Scrape the number of participants (marchers)
+    const marchersAsStringSum = scrapeValue(body, `.getElementById(\\"total-marchers\\").innerHTML = (`, `)`);
+    const numParticipants = marchersAsStringSum.split(" + ")
+      .reduce( (sum, valueString) => sum + parseInt(valueString, 10), 0);
+
+    // Update the cache with the newly-scraped values
+    cachedResults = {
+      ...cachedResults,
+      numEvents,
+      numParticipants,
     }
-  );
-  const { total_signatures } = JSON.parse(getResult.data) as { total_signatures: number };
-  cachedResults = {
-    ...cachedResults,
-    numPetitionSignatures: total_signatures
+  } catch (e) {
+    //
+    console.log("exception", e); // fixme
   }
 }
+
 
 export async function loadPetitionStatsByScrapingWidget(): Promise<void> {
   // The petition signature count can be scraped from this page's body
@@ -74,18 +96,20 @@ export async function loadPetitionStatsByScrapingWidget(): Promise<void> {
       }
     );
     const body = widget.data as string;
-    // The count comes immediately after this tag
-    const divStartTag = `<div class=\\"action_status_running_total\\">`;
-    const divStartIndex = body.indexOf(divStartTag);
-    if (divStartIndex <= 0) {
-      return;
-    }
-    const valueStartIndex = divStartIndex + divStartTag.length;
-    const bodyStartAtValue = body.substr(valueStartIndex);
-    // The count is comma-separated, and we'll pull out the comma so we can parse it.
-    const bodyValue = bodyStartAtValue.substr(0, bodyStartAtValue.indexOf(' ')).replace(",","");
+    const valueWithCommas = scrapeValue(body, `<div class=\\"action_status_running_total\\">`, ` `);
+    const valueString=valueWithCommas.replace(",","")
+    // // The count comes immediately after this tag
+    // const divStartTag = `<div class=\\"action_status_running_total\\">`;
+    // const divStartIndex = body.indexOf(divStartTag);
+    // if (divStartIndex <= 0) {
+    //   return;
+    // }
+    // const valueStartIndex = divStartIndex + divStartTag.length;
+    // const bodyStartAtValue = body.substr(valueStartIndex);
+    // // The count is comma-separated, and we'll pull out the comma so we can parse it.
+    // const bodyValue = bodyStartAtValue.substr(0, bodyStartAtValue.indexOf(' ')).replace(",","");
     // Parse the count and add it to the cache results.
-    const numPetitionSignatures = parseInt(bodyValue, 10);
+    const numPetitionSignatures = parseInt(valueString, 10);
     cachedResults = {
       ...cachedResults,
       numPetitionSignatures
@@ -96,44 +120,14 @@ export async function loadPetitionStatsByScrapingWidget(): Promise<void> {
   }
 }
 
-interface ActionKitEvent {
-  is_approved: 0 | 1,
-  attendee_count: number,
-}
-
-const getEventsUrl = `https://roboticdogs.actionkit.com/rest/v1/event/?campaign_id=${ACTION_KIT_CAMPAIGN_ID}`;
-const getEventsAxiosOptions = {
-  auth: {
-    username: ACTION_KIT_USERNAME,
-    password: ACTION_KIT_PASSWORD  
-  },
-  headers: {
-    Accept: "application/json"
-  }
-}
 /**
- * Load event statistics from ActionKit
- * and put the results directly in the cache so that
- * they are available immediately.
+ * Load the stats by getting the petition data from the petitition page
+ * and the marches data from the events page.
  */
-export async function loadEventStats(): Promise<void> {
-  const getEventsResult = await axios.get(getEventsUrl, getEventsAxiosOptions);
-  let events = JSON.parse(getEventsResult.data) as ActionKitEvent[];
-  events = events.filter( event => event.is_approved = 1)
-  const numEvents = events.length;
-  const numParticipants = events.reduce( (totalAttendees, event) => totalAttendees + event.attendee_count, 0);
-  cachedResults = {
-    ...cachedResults,
-    numEvents,
-    numParticipants,
-  }
-}
-
-
 async function loadStatsForOurLives(): Promise<void> {
   await Promise.all([
     loadPetitionStatsByScrapingWidget(),
-    // FIXME - turn back on // loadEventStats(),
+    loadMarchesByScrapingEveryTown(),
   ]);
 }
 

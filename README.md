@@ -28,3 +28,5 @@ node .\node_modules\typescript\bin\tsc
 ```
 node .\dist\get-stats-for-our-lives.js
 ```
+## Epilog
+"And I would have gotten away with it too, if it weren't for you meddling kids!" -- Every villian on Scooby Doo, and soon the NRA as well.
