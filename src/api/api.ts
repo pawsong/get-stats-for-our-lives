@@ -9,14 +9,6 @@ let uniqueRequenstIndex = 0;
 let uniquishString =
   "And the NRA would have gotten away with it too if it hadn't been for those meddling youngsters.";
 
-const iframe = new HTMLIFrameElement();
-iframe.hidden = true;
-iframe.height = "0px";
-iframe.width = "0px";
-iframe.src = `http://fixme/`;
-document.body.appendChild(iframe);
-const origin = `http:///`;
-
 function onMessage(this: Window, event: WindowEventMap["message"]) {
   const data: CrossDomainAPIs.Responses = event.data;
   if ("name" in data && "uniqueRequestId" in data && handlers.has(data.uniqueRequestId)) {
@@ -38,12 +30,17 @@ function onMessage(this: Window, event: WindowEventMap["message"]) {
 window.addEventListener("message", onMessage);
 
 function sendRequestFactory<API extends CrossDomainAPIs.WithoutPayload>(
+  origin: string,
   name: API["request"]["name"]
 ): () => Promise<CrossDomainAPIs.ResponsePayload<API>>;
 function sendRequestFactory<API extends CrossDomainAPIs.WithPayload>(
+  origin: string,
   name: API["request"]["name"]
 ): (payload: API["request"]["payload"]) => Promise<CrossDomainAPIs.ResponsePayload<API>>;
-function sendRequestFactory<API extends CrossDomainAPIs>(name: API["request"]["name"]):
+function sendRequestFactory<API extends CrossDomainAPIs>(
+  origin: string,
+  name: API["request"]["name"]
+):
   (payload: API["request"]["payload"]) => Promise<CrossDomainAPIs.ResponsePayload<API>>
  {
     return (payload: API["request"]["payload"]): Promise<CrossDomainAPIs.ResponsePayload<API>> => {
@@ -61,11 +58,25 @@ function sendRequestFactory<API extends CrossDomainAPIs>(name: API["request"]["n
     }
 }
 
-export const getStatsForOurLives: () => Promise<StatsForOurLives> = 
-  sendRequestFactory<CrossDomainAPIs.GetStatsForOurLives>(CrossDomainAPIs.Name.GetStatsForOurLives);
-
-export const getMarchForOurLivesEvents: () => Promise<MarchForOurLivesEvent[]> =
-  sendRequestFactory<CrossDomainAPIs.GetMarchForOurLivesEvents>(CrossDomainAPIs.Name.GetMarchForOurLivesEvents);
-
-export const getNearestMarch =
-  sendRequestFactory<CrossDomainAPIs.GetNearestMarch>(CrossDomainAPIs.Name.GetNearestMarch);
+let iframe: HTMLIFrameElement;
+export function getAPIs(iframeSrc: string) {
+  if (!iframe) {
+    const iframe = new HTMLIFrameElement();
+    iframe.hidden = true;
+    iframe.height = "0px";
+    iframe.width = "0px";
+    iframe.src = iframeSrc;
+    document.body.appendChild(iframe);
+  }
+  
+  const apis = {
+    getStatsForOurLives:
+      sendRequestFactory<CrossDomainAPIs.GetStatsForOurLives>(iframeSrc, CrossDomainAPIs.Name.GetStatsForOurLives) as
+        () => Promise<StatsForOurLives>,
+    getMarchForOurLivesEvents:
+      sendRequestFactory<CrossDomainAPIs.GetMarchForOurLivesEvents>(iframeSrc, CrossDomainAPIs.Name.GetMarchForOurLivesEvents) as
+        () => Promise<MarchForOurLivesEvent[]>,
+    getNearestMarch: sendRequestFactory<CrossDomainAPIs.GetNearestMarch>(iframeSrc, CrossDomainAPIs.Name.GetNearestMarch),
+  }
+  return apis;
+}
