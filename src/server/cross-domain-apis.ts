@@ -8,22 +8,40 @@ export namespace CrossDomainAPIs {
     GetNearestMarch = "GetNearestMarch",
   }
 
+  export interface REQ<NAME extends Name, PAYLOAD> {
+    name: NAME,
+    uniqueRequestId: string;
+    payload: PAYLOAD;  
+  }
+  export type RES<NAME extends Name, REQUEST_PAYLOAD, RESPONSE_PAYLOAD> = {
+    name: NAME,
+    uniqueRequestId: string;
+    request: REQUEST_PAYLOAD;
+  } & ({
+    payload: RESPONSE_PAYLOAD;
+  } | {
+    error: {
+      code: number,
+      body: string,
+    }
+  });
+
   export type API<NAME extends Name, REQUEST_PAYLOAD, RESPONSE_PAYLOAD> = {
-    request: {
-      name: NAME,
-      uniqueRequestId: string;
-      payload: REQUEST_PAYLOAD;
-    }
-    response: {
-      name: NAME,
-      uniqueRequestId: string;
-      request: REQUEST_PAYLOAD;
-      payload: RESPONSE_PAYLOAD;
-    }
+    name: NAME;
+    requestPayload: REQUEST_PAYLOAD;
+    responsePayload: RESPONSE_PAYLOAD;
+    request: REQ<NAME, REQUEST_PAYLOAD>;
+    response: RES<NAME, REQUEST_PAYLOAD, RESPONSE_PAYLOAD>;
   };
+
+  export type RequestPayload<RAPI extends API<Name, any, any>> = RAPI["requestPayload"];
+  export type ResponsePayload<RAPI extends API<Name, any, any>> = RAPI["responsePayload"];
 
   export type REQUEST<RAPI extends API<Name, any, any>> = RAPI["request"];
   export type RESPONSE<RAPI extends API<Name, any, any>> = RAPI["response"];
+
+  export type Requests = RESPONSE<CrossDomainAPIs>;
+  export type Responses = RESPONSE<CrossDomainAPIs>;
   
   export type GetStatsForOurLives = API<
     Name.GetStatsForOurLives,
