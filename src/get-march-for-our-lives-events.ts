@@ -33,6 +33,7 @@ export interface Event {
   is_full: boolean;
   is_open_for_signup: boolean;
   is_in_past: boolean;
+  day: number;
   hour: number;
   minute: number;
   city_etc_no_postal: string;
@@ -52,6 +53,9 @@ function parseTrueFalse(tfString: "True" | "False"): boolean {
 
 function rawEventToEvent(rawEvent: RawEvent): Event {
   const {starts_at, starts_at_full, starts_at_ts, ...raw} = rawEvent;
+  //const year = parseInt(starts_at_ts.substr(0,4));
+  //const month = parseInt(starts_at_ts.substr(5,2));
+  const day = parseInt(starts_at_ts.substr(8,2));
   const hour = parseInt(starts_at_ts.substr(11,2), 10);
   const minute = parseInt(starts_at_ts.substr(14,2), 10);
   return {
@@ -63,6 +67,7 @@ function rawEventToEvent(rawEvent: RawEvent): Event {
     is_full: parseTrueFalse(raw.is_full),
     is_open_for_signup: parseTrueFalse(raw.is_open_for_signup),
     is_in_past: parseTrueFalse(raw.is_in_past),
+    day,
     hour,
     minute
   }
