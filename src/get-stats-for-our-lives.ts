@@ -1,22 +1,8 @@
 import axios from "axios";
 import * as lambda from "aws-lambda";
 import { scrapeValue } from "./scrape-value";
-
+import {StatsForOurLives} from "./stats-for-our-lives";
 const msBetweenReloads = 5000;
-
-interface EventStats {
-  // The total number of marches
-  numEvents: number;
-  // The total number of participants for all the marches
-  numParticipants: number;  
-}
-
-interface PetitionStats {
-  // The total number of petition signatures
-  numPetitionSignatures: number;  
-}
-
-interface StatsForOurLives extends EventStats, PetitionStats {}
 
 /**
  * Store the most recent statistics here
