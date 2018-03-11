@@ -52,8 +52,8 @@ function parseTrueFalse(tfString: "True" | "False"): boolean {
 
 function rawEventToEvent(rawEvent: RawEvent): Event {
   const {starts_at, starts_at_full, starts_at_ts, ...raw} = rawEvent;
-  const hour = parseInt(starts_at_ts.substr(12,2), 10);
-  const minute = parseInt(starts_at_ts.substr(15,2), 10);
+  const hour = parseInt(starts_at_ts.substr(11,2), 10);
+  const minute = parseInt(starts_at_ts.substr(14,2), 10);
   return {
     ...raw,
     attendee_count: parseInt(raw.attendee_count, 10),
