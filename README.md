@@ -21,7 +21,6 @@ npm install
 ## Compiling
 Compile the typescript into javascript to build the contents of the `dist` directory.
 ```
-cd src
 node .\node_modules\typescript\bin\tsc
 ```
 
