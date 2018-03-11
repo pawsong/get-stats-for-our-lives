@@ -19,6 +19,7 @@
     "typescript": "^2.7.2"
   },
   "scripts": {
-    "debug": "node --inspect=9229 --debug-brk dist/get-stats-for-our-lives.js"
+    "debug": "node --inspect=9229 --debug-brk dist/get-stats-for-our-lives.js",
+    "debugevents": "node --inspect=9229 --debug-brk dist/get-march-for-our-lives-events.js"
   }
 }

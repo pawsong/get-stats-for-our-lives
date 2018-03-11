@@ -1,5 +1,6 @@
 import axios from "axios";
 import * as lambda from "aws-lambda";
+import { scrapeValue } from "./scrape-value";
 
 const msBetweenReloads = 5000;
 
@@ -34,27 +35,6 @@ const cacheMetadata = {
   // Track how fresh the data in the cache is.
   currentAsOf: undefined as Date | undefined
 };
-
-
-/**
- * Scrape a value out of a page or document by providing the UNIQUE string
- * that should come before the value and the string that should
- * occur after the value.
- * @param body 
- * @param startIndicator The string that occurs before the value to be scraped, which must
- * be unique enough to not also appear earlier in the document.  Scraping begins immediately
- * after this value.
- * @param endIndicator Scraping stops at the first occurrence of this string. 
- */
-function scrapeValue(body: string, startIndicator: string, endIndicator: string) {
-  const indexOfStartIndicator = body.indexOf(startIndicator);
-  if (indexOfStartIndicator <= 0) {
-    return "";
-  }
-  const indexOfValueToScrape = indexOfStartIndicator + startIndicator.length;
-  const bodyStartingWithValue = body.substr(indexOfValueToScrape);
-  return bodyStartingWithValue.substr(0, bodyStartingWithValue.indexOf(endIndicator));
-}
 
 
 const actionKitUrl = `https://event.marchforourlives.com/cms/event/march-our-lives-events_attend/search_results/?all=1&akid=&source=&page=march-our-lives-events_attend&callback=actionkit.forms.onEventSearchResults&callback=actionkit.forms.onEventSearchResults&r=0.4442138994547189`;
