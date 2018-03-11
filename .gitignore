@@ -32,6 +32,7 @@ bower_components
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
 dist/
+events.json
 
 # Dependency directories
 node_modules/
@@ -58,3 +59,6 @@ typings/
 # dotenv environment variables file
 .env
 
+events.json
+events.json
+events.json
