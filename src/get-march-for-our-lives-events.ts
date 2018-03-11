@@ -180,6 +180,6 @@ export const lambdaGetMarchForOurLivesEvents = async (_event: lambda.APIGatewayE
 
 async function runTest() {
   const result = await getMarchForOurLivesEvents();
-  console.log("Test output", result);
+  process.stdout.write(JSON.stringify(result, undefined, 2));
 }
 runTest();
