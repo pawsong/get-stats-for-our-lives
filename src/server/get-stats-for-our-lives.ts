@@ -64,25 +64,13 @@ export async function loadPetitionStatsByScrapingWidget(): Promise<void> {
     const body = widget.data as string;
     const valueWithCommas = scrapeValue(body, `<div class=\\"action_status_running_total\\">`, ` `);
     const valueString=valueWithCommas.replace(",","")
-    // // The count comes immediately after this tag
-    // const divStartTag = `<div class=\\"action_status_running_total\\">`;
-    // const divStartIndex = body.indexOf(divStartTag);
-    // if (divStartIndex <= 0) {
-    //   return;
-    // }
-    // const valueStartIndex = divStartIndex + divStartTag.length;
-    // const bodyStartAtValue = body.substr(valueStartIndex);
-    // // The count is comma-separated, and we'll pull out the comma so we can parse it.
-    // const bodyValue = bodyStartAtValue.substr(0, bodyStartAtValue.indexOf(' ')).replace(",","");
-    // Parse the count and add it to the cache results.
     const numPetitionSignatures = parseInt(valueString, 10);
     cachedResults = {
       ...cachedResults,
       numPetitionSignatures
     }
   } catch (e) {
-    //
-    console.log("exception", e); // fixme
+    console.log("exception", e);
   }
 }
 
