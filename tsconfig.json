@@ -2,9 +2,9 @@
   "compilerOptions": {
     "target": "es2017",
     "lib": ["es2017", "dom"],
-    "baseUrl": "./",
-    "rootDir": "./",
-    "outDir": "../dist",
+    "baseUrl": "./src",
+    "rootDir": "./src",
+    "outDir": "dist",
     "module": "commonjs",
     "declaration": true,
     "noImplicitAny": true,
@@ -20,6 +20,6 @@
     "types": ["node", "mocha"]
   },
   "include": [
-    "**/*",
+    "src/**/*",
   ]
 }
