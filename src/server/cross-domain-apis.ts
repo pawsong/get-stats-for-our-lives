@@ -1,5 +1,5 @@
-import {MarchForOurLivesEvent} from "../src/event";
-import {StatsForOurLives} from "../src/stats-for-our-lives";
+import {MarchForOurLivesEvent} from "./event";
+import {StatsForOurLives} from "./stats-for-our-lives";
 
 export namespace CrossDomainAPIs {
   export enum Name {
@@ -8,7 +8,7 @@ export namespace CrossDomainAPIs {
     GetNearestMarch = "GetNearestMarch",
   }
 
-  type API<NAME extends Name, REQUEST_PAYLOAD, RESPONSE_PAYLOAD> = {
+  export type API<NAME extends Name, REQUEST_PAYLOAD, RESPONSE_PAYLOAD> = {
     request: {
       name: NAME,
       uniqueRequestId: string;

@@ -1,6 +1,7 @@
-import {MarchForOurLivesEvent} from "../src/event";
-import {StatsForOurLives} from "../src/stats-for-our-lives";
-import {CrossDomainAPIs, CrossDomainMessage, CrossDomainResponse} from "./messages"
+import {CrossDomainAPIs, CrossDomainMessage} from "../server/cross-domain-apis";
+
+import {StatsForOurLives} from "../server/stats-for-our-lives"
+import {MarchForOurLivesEvent} from "../server/event";
 type Handler<RESPONSE> = (response: RESPONSE) => any;
 
 const handlers = new Map<string, Handler<any>>();
@@ -21,10 +22,15 @@ function onMessage(this: Window, event: WindowEventMap["message"]) {
   if ("type" in data && "uniqueRequestId" in data && "payload" in data) {
     const message = data as CrossDomainMessage & {payload: any};
     if (handlers.has(message.uniqueRequestId)) {
-      handlers.get(message.uniqueRequestId)(message.payload);
+      const handler = handlers.get(message.uniqueRequestId);
+      if (handler) {
+        handler(message.payload);
+      }
     }
   }
 }
+
+window.addEventListener("message", onMessage);
 
 function sendRequestFactory<API extends CrossDomainAPIs.WithoutPayload>(
   name: API["request"]["name"]
@@ -37,7 +43,7 @@ function sendRequestFactory<API extends CrossDomainAPIs>(name: API["request"]["n
  {
     return (payload: API["request"]["payload"]): Promise<API["response"]["payload"]> => {
       const uniqueRequestId = uniquishString + (uniqueRequenstIndex++).toString();
-      const promise = new Promise<API["response"]["payload"]>( (resolve, reject ) => {
+      const promise = new Promise<API["response"]["payload"]>( (resolve ) => {
         handlers.set(uniqueRequestId, resolve);
       });
       window.postMessage({
@@ -50,11 +56,11 @@ function sendRequestFactory<API extends CrossDomainAPIs>(name: API["request"]["n
     }
 }
 
-const getStatsForOurLives =
+export const getStatsForOurLives: () => Promise<StatsForOurLives> = 
   sendRequestFactory<CrossDomainAPIs.GetStatsForOurLives>(CrossDomainAPIs.Name.GetStatsForOurLives);
 
-const getMarchForOurLivesEvents =
+export const getMarchForOurLivesEvents: () => Promise<MarchForOurLivesEvent[]> =
   sendRequestFactory<CrossDomainAPIs.GetMarchForOurLivesEvents>(CrossDomainAPIs.Name.GetMarchForOurLivesEvents);
 
-const getNearestMarch =
+export const getNearestMarch =
   sendRequestFactory<CrossDomainAPIs.GetNearestMarch>(CrossDomainAPIs.Name.GetNearestMarch);

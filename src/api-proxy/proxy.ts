@@ -1,6 +1,6 @@
-import {MarchForOurLivesEvent} from "../src/event";
-import {StatsForOurLives} from "../src/stats-for-our-lives";
-import {CrossDomainAPIs} from "./messages";
+import {MarchForOurLivesEvent} from "../server/event";
+import {StatsForOurLives} from "../server/stats-for-our-lives";
+import {CrossDomainAPIs} from "../server/cross-domain-apis";
 
 interface TypedMessageEvent<T> extends MessageEvent {
   data: T;
@@ -23,6 +23,8 @@ function getStatsForOurLives(
       }
     }
   };
+  xhrequest.open('GET', url, true);
+  xhrequest.send(null);
 }
 
 function getMarchForOurLivesEvents(
@@ -42,6 +44,8 @@ function getMarchForOurLivesEvents(
       }
     }
   };
+  xhrequest.open('GET', url, true);
+  xhrequest.send(null);
 }
 
 
