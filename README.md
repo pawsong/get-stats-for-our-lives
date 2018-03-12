@@ -21,13 +21,13 @@ npm install
 ## Compiling
 Compile the typescript into javascript to build the contents of the `dist` directory.
 ```
-node .\node_modules\typescript\bin\tsc
+node ./node_modules/typescript/bin/tsc
 ```
 
 ## Test
 ```
-node .\dist\get-stats-for-our-lives.js
-node .\dist\get-march-for-our-lives-events.js
+node ./dist/test/stats.js
+node ./dist/test/marches.js
 ```
 ## Epilog
 "And I would have gotten away with it too, if it weren't for you meddling kids!" -- Every villian on Scooby Doo, and soon the NRA as well.

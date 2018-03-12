@@ -1,7 +1,7 @@
 import axios from "axios";
-import * as lambda from "aws-lambda";
 import { scrapeValue } from "./scrape-value";
-import {StatsForOurLives} from "./stats-for-our-lives";
+import { getMarchForOurLivesEvents } from "./events";
+import {StatsForOurLives} from "../../types";
 const msBetweenReloads = 5000;
 
 /**
@@ -23,25 +23,18 @@ const cacheMetadata = {
 };
 
 
-const actionKitUrl = `https://event.marchforourlives.com/cms/event/march-our-lives-events_attend/search_results/?all=1&akid=&source=&page=march-our-lives-events_attend&callback=actionkit.forms.onEventSearchResults&callback=actionkit.forms.onEventSearchResults&r=0.4442138994547189`;
-export async function loadMarchesByScrapingEveryTown(): Promise<void> {
+async function loadMarchStats(): Promise<void> {
   try {
-    const actionKitPage = await axios.get(actionKitUrl);
-    const body = actionKitPage.data as string;
-
-    // Scrape the number of events (marches)
-    const marchesAsString = scrapeValue(body, `getElementById(\\"total-marches\\").innerHTML = '`, `'`);
-    const numEvents = parseInt(marchesAsString, 10);
-
-    // Scrape the number of participants (marchers)
-    const marchersAsStringSum = scrapeValue(body, `.getElementById(\\"total-marchers\\").innerHTML = (`, `)`);
-    const numParticipants = marchersAsStringSum.split(" + ")
-      .reduce( (sum, valueString) => sum + parseInt(valueString, 10), 0);
+    const marches = await getMarchForOurLivesEvents();
+    const numParticipants = marches.reduce(
+      (sum, march) => sum + march.attendee_count,
+      0
+    );
 
     // Update the cache with the newly-scraped values
     cachedResults = {
       ...cachedResults,
-      numEvents,
+      numEvents: marches.length,
       numParticipants,
     }
   } catch (e) {
@@ -51,7 +44,7 @@ export async function loadMarchesByScrapingEveryTown(): Promise<void> {
 }
 
 
-export async function loadPetitionStatsByScrapingWidget(): Promise<void> {
+async function loadPetitionStatsByScrapingWidget(): Promise<void> {
   // The petition signature count can be scraped from this page's body
   // which we will download via the axios package
   try {
@@ -81,7 +74,7 @@ export async function loadPetitionStatsByScrapingWidget(): Promise<void> {
 async function loadStatsForOurLives(): Promise<void> {
   await Promise.all([
     loadPetitionStatsByScrapingWidget(),
-    loadMarchesByScrapingEveryTown(),
+    loadMarchStats(),
   ]);
 }
 
@@ -108,7 +101,7 @@ async function loadCache(): Promise<void> {
   }
 }
 
-async function getStatsForOurLives() {
+export async function getStatsForOurLives() {
   if (!cacheMetadata.currentAsOf) {
     // There is no data in the cache, and so we can't return a result
     // until the cache is loaded.  We must await the result of loadCache.
@@ -129,26 +122,3 @@ async function getStatsForOurLives() {
   // Return the cached results.
   return cachedResults;
 }
-
-/**
- * Exposing getStatsForOurLives as a lambda API that can be called via a GET method
- * and returns its results in JSON format.
- */
-export const lambdaGetStatsForOurLives = async (_event: lambda.APIGatewayEvent, _context: lambda.APIGatewayEventRequestContext, callback: lambda.APIGatewayProxyCallback) => {
-  try {
-    const result = await getStatsForOurLives();;
-
-    callback(undefined, {
-      body: JSON.stringify(result),
-      statusCode: 200
-    })
-  } catch (e) {
-    callback(new Error("Unable to fetch stats"), {body: JSON.stringify({exception: e, cachedResults}), statusCode:500} );
-  }
-}
-
-async function runTest() {
-  const result = await getStatsForOurLives();
-  console.log("Test output", result);
-}
-runTest();

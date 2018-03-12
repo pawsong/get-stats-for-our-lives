@@ -13,6 +13,10 @@ export namespace CrossDomainAPIs {
     uniqueRequestId: string;
     payload: PAYLOAD;  
   }
+  export interface Error<BODY=string> {
+    code: number,
+    body: BODY,  
+  }
   export type RES<NAME extends Name, REQUEST_PAYLOAD, RESPONSE_PAYLOAD> = {
     name: NAME,
     uniqueRequestId: string;
@@ -20,10 +24,7 @@ export namespace CrossDomainAPIs {
   } & ({
     payload: RESPONSE_PAYLOAD;
   } | {
-    error: {
-      code: number,
-      body: string,
-    }
+    error: Error
   });
 
   export type API<NAME extends Name, REQUEST_PAYLOAD, RESPONSE_PAYLOAD> = {
@@ -36,12 +37,13 @@ export namespace CrossDomainAPIs {
 
   export type RequestPayload<RAPI extends API<Name, any, any>> = RAPI["requestPayload"];
   export type ResponsePayload<RAPI extends API<Name, any, any>> = RAPI["responsePayload"];
+  export type MethodName<RAPI extends API<Name, any, any>> = RAPI["name"];
 
-  export type REQUEST<RAPI extends API<Name, any, any>> = RAPI["request"];
-  export type RESPONSE<RAPI extends API<Name, any, any>> = RAPI["response"];
+  export type RequestMessage<RAPI extends API<Name, any, any>> = RAPI["request"];
+  export type ResponseMessage<RAPI extends API<Name, any, any>> = RAPI["response"];
 
-  export type Requests = RESPONSE<CrossDomainAPIs>;
-  export type Responses = RESPONSE<CrossDomainAPIs>;
+  export type Requests = ResponseMessage<CrossDomainAPIs>;
+  export type Responses = ResponseMessage<CrossDomainAPIs>;
   
   export type GetStatsForOurLives = API<
     Name.GetStatsForOurLives,
@@ -50,8 +52,8 @@ export namespace CrossDomainAPIs {
   >;
 
   export namespace GetStatsForOurLives {
-    export type Request = REQUEST<GetStatsForOurLives>
-    export type Response = RESPONSE<GetStatsForOurLives>
+    export type Request = RequestMessage<GetStatsForOurLives>
+    export type Response = ResponseMessage<GetStatsForOurLives>
   }
 
   export type GetMarchForOurLivesEvents = API<
@@ -61,8 +63,8 @@ export namespace CrossDomainAPIs {
   >;
 
   export namespace GetMarchForOurLivesEvents {
-    export type Request = REQUEST<GetMarchForOurLivesEvents>
-    export type Response = RESPONSE<GetMarchForOurLivesEvents>
+    export type Request = RequestMessage<GetMarchForOurLivesEvents>
+    export type Response = ResponseMessage<GetMarchForOurLivesEvents>
   }
 
   export type GetNearestMarch = API<
@@ -70,13 +72,15 @@ export namespace CrossDomainAPIs {
     {
       latitude: number,
       longitude: number,
+    } | {
+      zipCode: string
     },
     MarchForOurLivesEvent[]
   >;
 
   export namespace GetNearestMarch {
-    export type Request = REQUEST<GetNearestMarch>
-    export type Response = RESPONSE<GetNearestMarch>
+    export type Request = RequestMessage<GetNearestMarch>
+    export type Response = ResponseMessage<GetNearestMarch>
   }
 
   export type WithoutPayload = 

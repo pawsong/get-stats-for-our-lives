@@ -8,7 +8,8 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^0.18.0",
-    "cross-env": "^5.1.3"
+    "cross-env": "^5.1.3",
+    "sphere-knn": "^1.3.1"
   },
   "devDependencies": {
     "@types/aws-lambda": "^0.0.33",
@@ -19,7 +20,9 @@
     "typescript": "^2.7.2"
   },
   "scripts": {
-    "debug": "node --inspect=9229 --debug-brk dist/get-stats-for-our-lives.js",
-    "debugevents": "node --inspect=9229 --debug-brk dist/get-march-for-our-lives-events.js"
+    "debug-stats": "node --inspect=9229 --debug-brk dist/tests/stats.js",
+    "debug-events": "node --inspect=9229 --debug-brk dist/tests/marches.js",
+    "debug-lat-long": "node --inspect=9229 --debug-brk dist/tests/marches-by-lat-long.js",
+    "debug-zip": "node --inspect=9229 --debug-brk dist/tests/marches-by-zip-code.js"
   }
 }
