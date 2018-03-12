@@ -141,7 +141,7 @@ function onMapClick(e: L.LeafletEvent) {
                 coordinates: [event.latitude, event.longitude]
             },
         }))
-    } as any;
+    } as any; // Hack because GeoJSON typings are broken
     geojsonLayer.addData(featureCollection);
     map.addLayer(geojsonLayer);
   });
