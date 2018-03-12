@@ -8,7 +8,6 @@ It includes components to allow cross-domain API requests (using cross-domain me
 
 ## API
 For full details, see `src/static/api.ts`
-```
 `/api/stats`
   returns a `MarchForOurLivesStats` object with current statistics (see interface below.)
 
