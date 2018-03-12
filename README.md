@@ -52,7 +52,9 @@ node ./dist/test/marches-by-lat-long.js
 node ./dist/test/marches-by-zip-code.js
 ```
 ## Run a server
-node ./dist/server/express/serve.js
+```
+npm run serve
+```
 ## Not yet tested
 Exposing as lambda functions
 ## To do
