@@ -6,6 +6,25 @@ The project is written in TypeScript for compilation to JavaScript.
 
 It includes components to allow cross-domain API requests (using cross-domain messaging) if deployed with api/proxy.js and an iframe that does nothing buy load that proxy.js (still to be added).
 
+## API
+For full details, see `src/static/api.ts`
+
+`/api/stats`
+
+     returns a `MarchForOurLivesStats` object with current statistics (see interface below.)
+
+`/api/events`
+
+     returns an array of all `MarchForOurLivesEvent` objects in the database.
+
+`/api/nearby`
+
+     requres either `zipCode` or (`latitude` and `longitude`)
+
+     optional parameters are `maxDistanceInMeters` (an integer) and `maxResults` (the max number of reuslts to return).
+
+     returns at most `maxResults` `MarchForOurLivesEvent` objects ranked by distance (closest first)
+
 ## Installing dependencies
 If you haven't already, install node.js on your machine.
 
@@ -25,13 +44,55 @@ Compile the typescript into javascript to build the contents of the `dist` direc
 ```
 node ./node_modules/typescript/bin/tsc
 ```
-
-## Test
+## Test individual functions
 ```
 node ./dist/test/stats.js
 node ./dist/test/marches.js
 node ./dist/test/marches-by-lat-long.js
 node ./dist/test/marches-by-zip-code.js
 ```
+## Run a server
+node ./dist/server/express/serve.js
+## Not yet tested
+Exposing as lambda functions
+## To do
+Compile API as separate .js and typescript defintions for export to partners
 ## Epilog
 "And I would have gotten away with it too, if it weren't for you meddling kids!" -- Every villian on Scooby Doo, and soon the NRA as well.
+
+## Event format
+```
+interface MarchForOurLivesEvent {
+  attendee_count: number;
+  latitude: number;
+  longitude: number;
+  id: number;
+  is_full: boolean;
+  is_open_for_signup: boolean;
+  is_in_past: boolean;
+  day: number;
+  hour: number;
+  minute: number;
+  city_etc_no_postal: string;
+  address1: string;
+  address2: string;
+  city: string;
+  zip: string;
+  title: string;
+  city_etc: string;
+  venue: string;
+  state: string;
+};
+```
+
+## Statistics format
+```
+interface MarchForOurLivesStatistics {
+  // The total number of marches
+  numEvents: number;
+  // The total number of participants for all the marches
+  numParticipants: number;  
+  // The total number of petition signatures
+  numPetitionSignatures: number;
+};
+```
