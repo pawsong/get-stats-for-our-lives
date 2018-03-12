@@ -10,14 +10,19 @@ It includes components to allow cross-domain API requests (using cross-domain me
 For full details, see `src/static/api.ts`
 
 `/api/stats`
+
   returns a `MarchForOurLivesStats` object with current statistics (see interface below.)
 
 `/api/events`
+
   returns an array of all `MarchForOurLivesEvent` objects in the database.
 
 `/api/nearby`
+
   requres either `zipCode` or (`latitude` and `longitude`)
+
   optional parameters are `maxDistanceInMeters` (an integer) and `maxResults` (the max number of reuslts to return).
+
   returns at most `maxResults` `MarchForOurLivesEvent` objects ranked by distance (closest first)
 
 ## Installing dependencies
