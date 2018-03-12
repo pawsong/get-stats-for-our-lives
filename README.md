@@ -1,4 +1,4 @@
-# get-stats-for-our-lives
+# Ragtag APIs for March for Our Lives data access
 
 This project provides an Amazon Web Services (AWS) lambda function that returns statistics on the March for Our Lives, ans well as the list of all events and a lookup of nearby events.  These statics include the number of petition signatories, the number of events taking place, and the aggregate total number of people signed up to march at the events.  The function provides a REST GET API.
 
