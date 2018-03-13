@@ -72,6 +72,7 @@ interface MarchForOurLivesEvent {
   is_full: boolean;
   is_open_for_signup: boolean;
   is_in_past: boolean;
+  time_at_iso: string; // ISO 8601 formatted start time with time zone set to event's zip code
   day: number;
   hour: number;
   minute: number;

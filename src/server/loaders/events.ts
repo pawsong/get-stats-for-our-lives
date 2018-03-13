@@ -1,7 +1,10 @@
 import axios from "axios";
 import sphereKnn = require("sphere-knn");
+import tzLookup = require("tz-lookup");
 import {MarchForOurLivesEvent, GetNearestMarchesRequestParams} from "../../types";
 import {zipCodeToLatLong} from "./zip-code-to-latitude-and-longitude";
+import {zipCodeToTimeZone} from "./zip-code-to-time-zone";
+import * as momenttz from "moment-timezone";
 import {cacheFactory} from "./cache-factory";
 
 const msBetweenReloads = parseInt(process.env["MFOL_EVENT_CACHE_RELOAD_FREQ_MS"] as string || "5000", 10);
@@ -11,7 +14,7 @@ interface RawDatabaseFormat {
   attendee_count: string; // parseInt
   address1: string;
   address2: string;
-  starts_at_ts: string; // YYYY-MM-DD HH:MM:SS, e.g. '2018-03-24 10:00:00',
+  starts_at_ts: string; // YYYY-MM-DD HH:mm:ss, e.g. '2018-03-24 10:00:00',
   latitude: string; // parseFloat, e.g. '33.81947',
   longitude: string; // parseFloat  e.g. '-116.52094',
   is_full: "True" | "False"; // parse to boolean via (value === "True")
@@ -32,22 +35,59 @@ function parseTrueFalse(tfString: "True" | "False"): boolean {
   return tfString === "True";
 }
 
+const timeZoneNumberToName: {[number: string]: string} = {
+  0: "America/New_York",
+  1: "America/Chicago",
+  2: "America/Denver",
+  3: "America/Los_Angeles",
+  4: "America/Kentucky/Louisville",
+  5: "America/Indiana/Indianapolis",
+  6: "America/Detroit",
+  7: "America/Boise",
+  8: "America/Phoenix",
+  9: "America/Anchorage",
+  10: "Pacific/Honolulu",
+  11: "America/Indiana/Knox",
+  12: "America/Indiana/Winamac",
+  13: "America/Indiana/Vevay",
+  14: "America/Indiana/Marengo",
+  15: "America/Indiana/Vincennes",
+  16: "America/Indiana/Tell_City",
+  17: "America/Indiana/Petersburg",
+  18: "America/Menominee",
+  19: "America/Shiprock",
+  20: "America/Nome",
+  21: "America/Juneau",
+  22: "America/Kentucky/Monticello",
+  23: "America/North_Dakota/Center",
+  24: "America/Yakutat"
+};
+
 function rawEventToEvent(rawEvent: RawDatabaseFormat): MarchForOurLivesEvent {
   const {starts_at, starts_at_full, starts_at_ts, ...raw} = rawEvent;
-  //const year = parseInt(starts_at_ts.substr(0,4));
-  //const month = parseInt(starts_at_ts.substr(5,2));
+  const latitude = parseFloat(raw.latitude);
+  const longitude = parseFloat(raw.longitude);
+
+  const timeZoneByZip = (typeof(raw.zip) === "string" && raw.zip.length >= 5) ?
+    timeZoneNumberToName[zipCodeToTimeZone[raw.zip.substr(0,5)]] : undefined;
+  const timeZone = timeZoneByZip || tzLookup(latitude, longitude);
+  const whenStarts = momenttz.tz(starts_at_ts, "YYYY-MM-DD HH:mm:ss", timeZone);
+  const time_at_iso = whenStarts.toISOString(true);
+  // const year = parseInt(starts_at_ts.substr(0,4));
+  // const month = parseInt(starts_at_ts.substr(5,2));
   const day = parseInt(starts_at_ts.substr(8,2));
   const hour = parseInt(starts_at_ts.substr(11,2), 10);
   const minute = parseInt(starts_at_ts.substr(14,2), 10);
   return {
     ...raw,
+    latitude,
+    longitude,
     attendee_count: parseInt(raw.attendee_count, 10),
-    latitude: parseFloat(raw.latitude),
-    longitude: parseFloat(raw.longitude),
     id: parseInt(raw.id),
     is_full: parseTrueFalse(raw.is_full),
     is_open_for_signup: parseTrueFalse(raw.is_open_for_signup),
     is_in_past: parseTrueFalse(raw.is_in_past),
+    time_at_iso,
     day,
     hour,
     minute
@@ -65,20 +105,24 @@ export async function loadMarchesByScrapingEveryTown() {
     const endIndicator = `;\\ntry {\\nadd_marker(`; // `\\n}
     let startIndicatorPosition = body.indexOf(startIndicator, 0);
     while (startIndicatorPosition >= 0) {
-      const startPosition = startIndicatorPosition + startIndicator.length;
-      const endPosition = body.indexOf(endIndicator, startPosition);
-      if (endPosition < 0)
-        break;
-      const entryString = body.slice(startPosition, endPosition)
-        .replace(/',\\n'/g, `","`)
-        .replace(/': '/g, `": "`)
-        .replace(/\\n/g,``)
-        .replace(`{'`, `{"`)
-        .replace(`'}`, `"}`);
-      const rawEvent: RawDatabaseFormat = JSON.parse(entryString);
-      const event = rawEventToEvent(rawEvent);
-      events.push(event);
-      startIndicatorPosition = body.indexOf(startIndicator, endPosition);
+      try {
+        const startPosition = startIndicatorPosition + startIndicator.length;
+        const endPosition = body.indexOf(endIndicator, startPosition);
+        if (endPosition < 0)
+          break;
+        const entryString = body.slice(startPosition, endPosition)
+          .replace(/',\\n'/g, `","`)
+          .replace(/': '/g, `": "`)
+          .replace(/\\n/g,``)
+          .replace(`{'`, `{"`)
+          .replace(`'}`, `"}`);
+        const rawEvent: RawDatabaseFormat = JSON.parse(entryString);
+        const event = rawEventToEvent(rawEvent);
+        events.push(event);
+        startIndicatorPosition = body.indexOf(startIndicator, endPosition);
+      } catch (e) {
+        console.log("exception", e);
+      }
     }
     return {
       events: events,
@@ -86,7 +130,7 @@ export async function loadMarchesByScrapingEveryTown() {
     };
   } catch (e) {
     //
-    console.log("exception", e); // fixme
+    console.log("exception", e);
     throw e;
   }
 }
