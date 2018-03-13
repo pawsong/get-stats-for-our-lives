@@ -49,7 +49,7 @@ app.get('/api/stats', cors(), wrapGet<undefined>(
 ));
 
 const staticParams = { root: path.join(__dirname, '../../static') };
-app.get('/api.js', function(_req, res) {
+app.get('/api.js', cors(), function(_req, res) {
   return res.sendFile('api.js', staticParams);
 });
 
