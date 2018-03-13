@@ -1,0 +1,1 @@
+{"version":3,"file":"apis.js","sourceRoot":"","sources":["../../src/types/apis.ts"],"names":[],"mappings":"","sourcesContent":["\nexport type GetNearestMarchesRequestParams = {\n  maxResults?: number,\n  maxDistanceInMeters?: number\n} & ({\n  zipCode: string\n} | {\n  latitude: number,\n  longitude: number,\n} | {\n  latitude: string,\n  longitude: string,\n});\n"]}
