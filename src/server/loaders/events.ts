@@ -1,5 +1,6 @@
 import axios from "axios";
 import sphereKnn = require("sphere-knn");
+import tzLookup = require("tz-lookup");
 import {MarchForOurLivesEvent, GetNearestMarchesRequestParams} from "../../types";
 import {zipCodeToLatLong} from "./zip-code-to-latitude-and-longitude";
 import {zipCodeToTimeZone} from "./zip-code-to-time-zone";
@@ -64,11 +65,12 @@ const timeZoneNumberToName: {[number: string]: string} = {
 
 function rawEventToEvent(rawEvent: RawDatabaseFormat): MarchForOurLivesEvent {
   const {starts_at, starts_at_full, starts_at_ts, ...raw} = rawEvent;
-  const timeZoneNumber = zipCodeToTimeZone[raw.zip];
-  if (typeof(timeZoneNumber) === "undefined") {
-    // console.log("No time zone for", raw.zip);
-  }
-  const timeZone = timeZoneNumberToName[timeZoneNumber || "0"];
+  const latitude = parseFloat(raw.latitude);
+  const longitude = parseFloat(raw.longitude);
+
+  const timeZoneByZip = (typeof(raw.zip) === "string" && raw.zip.length >= 5) ?
+    timeZoneNumberToName[zipCodeToTimeZone[raw.zip.substr(0,5)]] : undefined;
+  const timeZone = timeZoneByZip || tzLookup(latitude, longitude);
   const whenStarts = momenttz.tz(starts_at_ts, "YYYY-MM-DD HH:mm:ss", timeZone);
   const time_at_iso = whenStarts.toISOString(true);
   // const year = parseInt(starts_at_ts.substr(0,4));
@@ -78,9 +80,9 @@ function rawEventToEvent(rawEvent: RawDatabaseFormat): MarchForOurLivesEvent {
   const minute = parseInt(starts_at_ts.substr(14,2), 10);
   return {
     ...raw,
+    latitude,
+    longitude,
     attendee_count: parseInt(raw.attendee_count, 10),
-    latitude: parseFloat(raw.latitude),
-    longitude: parseFloat(raw.longitude),
     id: parseInt(raw.id),
     is_full: parseTrueFalse(raw.is_full),
     is_open_for_signup: parseTrueFalse(raw.is_open_for_signup),
